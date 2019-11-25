@@ -1,0 +1,53 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Nov 21 11:58:25 2019
+
+@author: marga
+"""
+
+#Optimization for grid system A*T-P
+
+from gurobipy import*
+import numpy as np
+
+#Create our model
+m = Model("qp")
+
+#create variables
+#start unknowns at node 2
+P2 = m.addVar(name = "P2")
+T2 = m.addVar(name = "T2")
+
+#define existing matrices, including unknowns
+
+#D defines topology of system
+D = np.matrix([[1,0,0,0,0],[-1,1,0,0,1],[0,-1,1,1,0],[0,0,-1,0,0],[0,0,0,0,-1],[0,0,0,-1,0]])
+
+#Y defines impedances
+Y = np.matrix([[21.2766,0,0,0,0],[0,3.9825,0,0,0],[0,0,0.1967,0,0],[0,0,0,0.1131,0],[0,0,0,0,0.3416]])
+
+#A is the product of DYD*
+A = D * Y * D.transpose()
+
+print (A)
+
+#P defines the power at each node
+#P2 = -0.979877 originally
+P = np.matrix([[0],[P2],[0.33],[0.210486],[-0.349514],[0.375]])
+
+#T represents theta
+#T2 = -0.00324226 originally
+T = np.matrix([[0],[T2],[0.2786],[1.69939],[-0.824465],[4.20419]])
+
+#Set objective equation! 0.5AA*TT*-A*T*P
+obj = [(0.5 * A * A.transpose() * T * T.transpose()) - (A.transpose() * P * T.transpose())]
+m.setObjective(obj)
+
+#without constraints, P is given as a matrix of zeros
+#m.addConstr(A * T - P == 0, "c1")
+
+m.optimize()
+
+#print (P)
+
+
